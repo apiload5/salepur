@@ -1,0 +1,134 @@
+-- users table
+CREATE TABLE users (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  phone VARCHAR(20),
+  city VARCHAR(100),
+  lat DECIMAL(10,8),
+  lng DECIMAL(11,8),
+  role VARCHAR(20) DEFAULT 'user',
+  email_verified BOOLEAN DEFAULT FALSE,
+  is_active BOOLEAN DEFAULT TRUE,
+  last_login TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  deleted_at TIMESTAMP
+);
+
+-- ads table
+CREATE TABLE ads (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  price DECIMAL(12,2) NOT NULL,
+  category VARCHAR(50) NOT NULL,
+  subcategory VARCHAR(50),
+  city VARCHAR(100) NOT NULL,
+  images TEXT[],
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_name VARCHAR(100),
+  user_phone VARCHAR(20),
+  lat DECIMAL(10,8),
+  lng DECIMAL(11,8),
+  is_premium BOOLEAN DEFAULT FALSE,
+  premium_package VARCHAR(20),
+  premium_until TIMESTAMP,
+  status VARCHAR(20) DEFAULT 'active',
+  views INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW(),
+  deleted_at TIMESTAMP,
+  deleted_reason TEXT,
+  deleted_by UUID REFERENCES users(id)
+);
+
+-- chats table
+CREATE TABLE chats (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  ad_id UUID REFERENCES ads(id) ON DELETE CASCADE,
+  buyer_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  seller_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  last_message TEXT,
+  last_message_time TIMESTAMP,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- messages table
+CREATE TABLE messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  chat_id UUID REFERENCES chats(id) ON DELETE CASCADE,
+  sender_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  receiver_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  message TEXT NOT NULL,
+  read BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- login_attempts table
+CREATE TABLE login_attempts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  success BOOLEAN DEFAULT FALSE,
+  ip VARCHAR(45),
+  user_agent TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- payments table
+CREATE TABLE payments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  ad_id UUID REFERENCES ads(id) ON DELETE CASCADE,
+  amount DECIMAL(10,2) NOT NULL,
+  package VARCHAR(20) NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending',
+  payment_method VARCHAR(50),
+  transaction_id VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW(),
+  completed_at TIMESTAMP
+);
+
+-- admin_logs table
+CREATE TABLE admin_logs (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  admin_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  action VARCHAR(100) NOT NULL,
+  data JSONB,
+  ip VARCHAR(45),
+  user_agent TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- settings table
+CREATE TABLE settings (
+  id SERIAL PRIMARY KEY,
+  site_name VARCHAR(100) DEFAULT 'SalePur',
+  site_description TEXT,
+  contact_email VARCHAR(255),
+  contact_phone VARCHAR(20),
+  address TEXT,
+  currency VARCHAR(10) DEFAULT 'PKR',
+  tax_rate DECIMAL(5,2) DEFAULT 0,
+  premium_prices JSONB DEFAULT '{"basic": 499, "standard": 999, "premium": 1999}',
+  maintenance_mode BOOLEAN DEFAULT FALSE,
+  updated_at TIMESTAMP DEFAULT NOW(),
+  updated_by UUID REFERENCES users(id)
+);
+
+-- Insert default settings
+INSERT INTO settings (site_name, contact_email) VALUES ('SalePur', 'info@salepur.com');
+
+-- Create indexes
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_ads_category ON ads(category);
+CREATE INDEX idx_ads_city ON ads(city);
+CREATE INDEX idx_ads_user_id ON ads(user_id);
+CREATE INDEX idx_ads_status ON ads(status);
+CREATE INDEX idx_ads_premium ON ads(is_premium);
+CREATE INDEX idx_ads_created ON ads(created_at DESC);
+CREATE INDEX idx_chats_ad_id ON chats(ad_id);
+CREATE INDEX idx_chats_buyer_seller ON chats(buyer_id, seller_id);
+CREATE INDEX idx_messages_chat_id ON messages(chat_id);
+CREATE INDEX idx_messages_created ON messages(created_at);
