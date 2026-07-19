@@ -132,3 +132,17 @@ CREATE INDEX idx_chats_ad_id ON chats(ad_id);
 CREATE INDEX idx_chats_buyer_seller ON chats(buyer_id, seller_id);
 CREATE INDEX idx_messages_chat_id ON messages(chat_id);
 CREATE INDEX idx_messages_created ON messages(created_at);
+
+-- ============================================
+-- UPDATE ADS TABLE - Video Support (No Storage)
+-- ============================================
+
+-- Add video columns
+ALTER TABLE ads ADD COLUMN video_url TEXT;
+ALTER TABLE ads ADD COLUMN video_platform VARCHAR(20); -- youtube, tiktok, instagram, facebook, dailymotion, vimeo
+ALTER TABLE ads ADD COLUMN video_embed_url TEXT;
+ALTER TABLE ads ADD COLUMN video_thumbnail TEXT;
+ALTER TABLE ads ADD COLUMN video_id VARCHAR(100);
+
+-- Add index for video ads
+CREATE INDEX idx_ads_video ON ads(video_url) WHERE video_url IS NOT NULL;
